@@ -5,3 +5,4 @@ output "cluster_name" {
 output "cluster_arn" {
   value = aws_eks_cluster.txodds.arn
 }
+

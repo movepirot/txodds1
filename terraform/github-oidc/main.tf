@@ -92,10 +92,9 @@ resource "aws_eks_access_entry" "gha" {
 resource "aws_eks_access_policy_association" "gha" {
   cluster_name  = var.eks_cluster_name
   principal_arn = aws_iam_role.gha.arn
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
 
   access_scope {
-    type       = "namespace"
-    namespaces = ["txodds", "kube-system"]
+    type = "cluster"
   }
 }
