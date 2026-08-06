@@ -59,12 +59,15 @@ jobs:
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_REGION
 
+      - name: Create namespace
+        run: kubectl create namespace txodds --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Deploy with Helm
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         run: |
           helm upgrade --install txodds app/app \
-            -n txodds --create-namespace \
+            -n txodds \
             --set image.repository=$REGISTRY/$ECR_REPOSITORY \
             --set image.tag=$IMAGE_TAG
