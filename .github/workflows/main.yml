@@ -62,16 +62,18 @@ jobs:
 
       - name: Install ALB Ingress Controller
         run: |
-          helm repo add eks https://aws.github.io/eks-charts
-          helm repo update
-          VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER --region $AWS_REGION --query 'cluster.resourcesVpcConfig.vpcId' --output text)
-          helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
-            -n kube-system \
-            --set clusterName=$EKS_CLUSTER \
-            --set serviceAccount.name=aws-load-balancer-controller \
-            --set vpcId=$VPC_ID \
-            --set region=$AWS_REGION \
-            --set replicaCount=2
+          if ! helm status aws-load-balancer-controller -n kube-system &>/dev/null; then
+            helm repo add eks https://aws.github.io/eks-charts
+            helm repo update
+            VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER --region $AWS_REGION --query 'cluster.resourcesVpcConfig.vpcId' --output text)
+            helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+              -n kube-system \
+              --set clusterName=$EKS_CLUSTER \
+              --set serviceAccount.name=aws-load-balancer-controller \
+              --set vpcId=$VPC_ID \
+              --set region=$AWS_REGION \
+              --set replicaCount=2
+          fi
           kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=300s
 
       - name: Create namespace
