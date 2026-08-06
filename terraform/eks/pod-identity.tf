@@ -64,11 +64,28 @@ resource "aws_iam_policy" "alb-controller" {
         Resource = "*"
       },
       {
+        Effect   = "Allow"
+        Action   = ["ec2:CreateSecurityGroup"]
+        Resource = "*"
+      },
+      {
+        Effect  = "Allow"
+        Action  = ["ec2:CreateTags"]
+        Resource = "arn:aws:ec2:*:*:security-group/*"
+        Condition = {
+          StringEquals = {
+            "ec2:CreateAction" = "CreateSecurityGroup"
+          }
+          Null = {
+            "aws:RequestTag/elbv2.k8s.aws/cluster" = "false"
+          }
+        }
+      },
+      {
         Effect = "Allow"
         Action = [
           "ec2:AuthorizeSecurityGroupIngress",
           "ec2:RevokeSecurityGroupIngress",
-          "ec2:CreateSecurityGroup",
           "ec2:DeleteSecurityGroup",
           "ec2:CreateTags",
           "ec2:DeleteTags"
@@ -79,11 +96,6 @@ resource "aws_iam_policy" "alb-controller" {
             "aws:ResourceTag/elbv2.k8s.aws/cluster" = "false"
           }
         }
-      },
-      {
-        Effect   = "Allow"
-        Action   = ["ec2:CreateSecurityGroup"]
-        Resource = "*"
       },
       {
         Effect = "Allow"
