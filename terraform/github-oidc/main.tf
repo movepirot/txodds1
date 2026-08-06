@@ -96,6 +96,6 @@ resource "aws_eks_access_policy_association" "gha" {
 
   access_scope {
     type       = "namespace"
-    namespaces = ["txodds"]
+    namespaces = ["txodds", "kube-system"]
   }
 }

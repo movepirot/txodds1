@@ -9,11 +9,14 @@ resource "aws_vpc" "txodds" {
 
 resource "aws_subnet" "public_subnets" {
   count = length(var.public_cidrs)
-  vpc_id            = aws_vpc.txodds.id
-  cidr_block        = element(var.public_cidrs, count.index)
-  availability_zone = element(var.azs, count.index)
+  vpc_id                  = aws_vpc.txodds.id
+  cidr_block              = element(var.public_cidrs, count.index)
+  availability_zone       = element(var.azs, count.index)
+  map_public_ip_on_launch = true
   tags = {
-    Name = "Public Subnet ${count.index + 1}"
+    Name                                        = "Public Subnet ${count.index + 1}"
+    "kubernetes.io/role/elb"                    = "1"
+    "kubernetes.io/cluster/txodds-cluster"      = "shared"
   }
 }
 
@@ -23,7 +26,9 @@ resource "aws_subnet" "private_subnets" {
   cidr_block        = element(var.private_cidrs, count.index)
   availability_zone = element(var.azs, count.index)
   tags = {
-    Name = "Private Subnet ${count.index + 1}"
+    Name                                        = "Private Subnet ${count.index + 1}"
+    "kubernetes.io/role/internal-elb"           = "1"
+    "kubernetes.io/cluster/txodds-cluster"      = "shared"
   }
 }
 
