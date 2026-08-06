@@ -60,7 +60,7 @@ jobs:
         run: aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_REGION
 
       - name: Create namespace
-        run: kubectl create namespace txodds --dry-run=client -o yaml | kubectl apply -f -
+        run: kubectl get namespace txodds || kubectl create namespace txodds
 
       - name: Deploy with Helm
         env:
