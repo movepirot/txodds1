@@ -38,7 +38,8 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG app
-          docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          aws ecr describe-images --repository-name $ECR_REPOSITORY --image-ids imageTag=$IMAGE_TAG --region $AWS_REGION 2>/dev/null \
+            || docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy:
     needs: build
