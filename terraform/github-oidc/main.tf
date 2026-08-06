@@ -32,7 +32,7 @@ resource "aws_iam_role" "gha" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = "repo:movepirot@*/${split("/", var.github_repo)[1]}@*:*"
           }
         }
       },
@@ -92,10 +92,9 @@ resource "aws_eks_access_entry" "gha" {
 resource "aws_eks_access_policy_association" "gha" {
   cluster_name  = var.eks_cluster_name
   principal_arn = aws_iam_role.gha.arn
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
 
   access_scope {
-    type       = "namespace"
-    namespaces = ["txodds"]
+    type = "cluster"
   }
 }
