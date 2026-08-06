@@ -46,7 +46,7 @@ resource "aws_eks_node_group" "txodds-workers" {
   node_group_name = "txodds-workers"
   node_role_arn   = aws_iam_role.eks-workers.arn
   subnet_ids      = tolist(var.private_subnet_list[*].id)
-  instance_types = ["t3a.small"]
+  instance_types = ["t3.micro"]
   ami_type = "AL2023_x86_64_STANDARD"
   scaling_config {
     desired_size = 2

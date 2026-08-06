@@ -13,7 +13,7 @@ module "ecr" {
 
 module "github-oidc" {
     source              = "./github-oidc"
-    github_repo         = "movepirot/txodds"
+    github_repo         = "movepirot/txodds1"
     ecr_repository_arn  = module.ecr.repository_arn
     eks_cluster_name    = module.eks.cluster_name
     eks_cluster_arn     = module.eks.cluster_arn
