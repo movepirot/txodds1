@@ -83,5 +83,6 @@ jobs:
 
       - name: Print endpoint
         run: |
-          kubectl wait ingress/txodds -n txodds --for=jsonpath='{.status.loadBalancer.ingress[0].hostname}' --timeout=120s
-          echo "Endpoint URL: http://$(kubectl get ingress txodds -n txodds -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+          INGRESS_NAME=$(kubectl get ingress -n txodds -o jsonpath='{.items[0].metadata.name}')
+          kubectl wait ingress/$INGRESS_NAME -n txodds --for=jsonpath='{.status.loadBalancer.ingress[0].hostname}' --timeout=120s
+          echo "Endpoint URL: http://$(kubectl get ingress $INGRESS_NAME -n txodds -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
