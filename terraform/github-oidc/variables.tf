@@ -1,5 +1,5 @@
 variable "github_repo" {
-  description = "GitHub org/repo allowed to assume this role, e.g. \"movepirot/txodds\""
+  description = "GitHub org/repo allowed to assume this role, e.g. \"my-org/my-repo\""
   type        = string
 }
 
