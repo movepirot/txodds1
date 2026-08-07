@@ -1,5 +1,5 @@
 resource "aws_eks_cluster" "txodds" {
-    name = "txodds-cluster"
+    name = var.cluster_name
 
     access_config {
       authentication_mode = "API"
@@ -118,7 +118,7 @@ resource "null_resource" "update_kubeconfig" {
   }
 
   provisioner "local-exec" {
-    command = "aws eks update-kubeconfig --name ${aws_eks_cluster.txodds.name} --region eu-west-2"
+    command = "aws eks update-kubeconfig --name ${aws_eks_cluster.txodds.name} --region ${var.region}"
   }
 
   depends_on = [aws_eks_access_policy_association.root]
@@ -127,7 +127,7 @@ resource "null_resource" "update_kubeconfig" {
 resource "null_resource" "cleanup_k8s" {
   triggers = {
     cluster_name = aws_eks_cluster.txodds.name
-    region       = "eu-west-2"
+    region       = var.region
     vpc_id       = var.vpc_id
   }
 

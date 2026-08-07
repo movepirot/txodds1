@@ -1,3 +1,7 @@
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 resource "aws_vpc" "txodds" {
     cidr_block = "10.0.0.0/16"
     enable_dns_support   = true
@@ -11,12 +15,12 @@ resource "aws_subnet" "public_subnets" {
   count = length(var.public_cidrs)
   vpc_id                  = aws_vpc.txodds.id
   cidr_block              = element(var.public_cidrs, count.index)
-  availability_zone       = element(var.azs, count.index)
+  availability_zone       = element(data.aws_availability_zones.available.names, count.index)
   map_public_ip_on_launch = true
   tags = {
     Name                                        = "Public Subnet ${count.index + 1}"
     "kubernetes.io/role/elb"                    = "1"
-    "kubernetes.io/cluster/txodds-cluster"      = "shared"
+    "kubernetes.io/cluster/${var.cluster_name}"      = "shared"
   }
 }
 
@@ -24,11 +28,11 @@ resource "aws_subnet" "private_subnets" {
   count = length(var.private_cidrs)
   vpc_id            = aws_vpc.txodds.id
   cidr_block        = element(var.private_cidrs, count.index)
-  availability_zone = element(var.azs, count.index)
+  availability_zone = element(data.aws_availability_zones.available.names, count.index)
   tags = {
     Name                                        = "Private Subnet ${count.index + 1}"
     "kubernetes.io/role/internal-elb"           = "1"
-    "kubernetes.io/cluster/txodds-cluster"      = "shared"
+    "kubernetes.io/cluster/${var.cluster_name}"      = "shared"
   }
 }
 
