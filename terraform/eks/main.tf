@@ -95,6 +95,35 @@ resource "aws_iam_role_policy_attachment" "ecr-read-policy" {
   role       = aws_iam_role.eks-workers.name
 }
 
+resource "aws_eks_access_entry" "root" {
+  cluster_name  = aws_eks_cluster.txodds.name
+  principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+}
+
+resource "aws_eks_access_policy_association" "root" {
+  cluster_name  = aws_eks_cluster.txodds.name
+  principal_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  access_scope {
+    type = "cluster"
+  }
+  depends_on = [aws_eks_access_entry.root]
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "null_resource" "update_kubeconfig" {
+  triggers = {
+    cluster_name = aws_eks_cluster.txodds.name
+  }
+
+  provisioner "local-exec" {
+    command = "aws eks update-kubeconfig --name ${aws_eks_cluster.txodds.name} --region eu-west-2"
+  }
+
+  depends_on = [aws_eks_access_policy_association.root]
+}
+
 resource "null_resource" "cleanup_k8s" {
   triggers = {
     cluster_name = aws_eks_cluster.txodds.name
