@@ -51,7 +51,7 @@ jobs:
             helm repo add eks https://aws.github.io/eks-charts
             helm repo update
             VPC_ID=$(aws eks describe-cluster --name $EKS_CLUSTER --region $AWS_REGION --query 'cluster.resourcesVpcConfig.vpcId' --output text)
-            helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+            helm install aws-load-balancer-controller eks/aws-load-balancer-controller --version 3.5.0 \
               -n kube-system \
               --set clusterName=$EKS_CLUSTER \
               --set serviceAccount.name=aws-load-balancer-controller \
