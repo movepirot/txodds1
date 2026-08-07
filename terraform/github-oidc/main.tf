@@ -32,7 +32,7 @@ resource "aws_iam_role" "gha" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:movepirot@*/${split("/", var.github_repo)[1]}@*:*"
+            "token.actions.githubusercontent.com:sub" = "repo:${split("/", var.github_repo)[0]}@*/${split("/", var.github_repo)[1]}@*:*"
           }
         }
       },
