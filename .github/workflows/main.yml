@@ -88,3 +88,8 @@ jobs:
             -n txodds \
             --set image.repository=$REGISTRY/$ECR_REPOSITORY \
             --set image.tag=$IMAGE_TAG
+
+      - name: Print endpoint
+        run: |
+          kubectl wait ingress/txodds -n txodds --for=jsonpath='{.status.loadBalancer.ingress[0].hostname}' --timeout=120s
+          echo "Endpoint URL: http://$(kubectl get ingress txodds -n txodds -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
