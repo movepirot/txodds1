@@ -3,8 +3,9 @@ module "vpc" {
 }
 
 module "eks" {
-    source = "./eks"
+    source              = "./eks"
     private_subnet_list = module.vpc.private_subnets
+    vpc_id              = module.vpc.vpc_id
 }
 
 module "ecr" {

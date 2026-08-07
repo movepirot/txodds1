@@ -99,16 +99,32 @@ resource "null_resource" "cleanup_k8s" {
   triggers = {
     cluster_name = aws_eks_cluster.txodds.name
     region       = "eu-west-2"
+    vpc_id       = var.vpc_id
   }
 
   provisioner "local-exec" {
     when    = destroy
     command = <<-EOT
-      aws eks update-kubeconfig --name ${self.triggers.cluster_name} --region ${self.triggers.region} || true
-      helm uninstall txodds -n txodds --ignore-not-found 2>/dev/null || true
-      helm uninstall aws-load-balancer-controller -n kube-system --ignore-not-found 2>/dev/null || true
-      kubectl delete ingress --all -n txodds 2>/dev/null || true
+      REGION=${self.triggers.region}
+      VPC_ID=${self.triggers.vpc_id}
+
+      # Delete all ALBs in the VPC
+      for ALB_ARN in $(aws elbv2 describe-load-balancers --region $REGION \
+        --query "LoadBalancers[?VpcId=='$VPC_ID'].LoadBalancerArn" --output text); do
+        echo "Deleting ALB: $ALB_ARN"
+        aws elbv2 delete-load-balancer --load-balancer-arn $ALB_ARN --region $REGION
+      done
+
+      # Wait for ALBs and their ENIs to be released
       sleep 30
+
+      # Delete ALB-created security groups (not managed by terraform)
+      for SG_ID in $(aws ec2 describe-security-groups --region $REGION \
+        --filters "Name=vpc-id,Values=$VPC_ID" \
+        --query "SecurityGroups[?starts_with(GroupName,'k8s-')].GroupId" --output text); do
+        echo "Deleting SG: $SG_ID"
+        aws ec2 delete-security-group --group-id $SG_ID --region $REGION || true
+      done
     EOT
   }
 
