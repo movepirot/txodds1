@@ -70,6 +70,14 @@ resource "aws_iam_policy" "alb-controller" {
         Resource = "*"
       },
       {
+        Effect   = "Allow"
+        Action   = [
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupIngress"
+        ]
+        Resource = "*"
+      },
+      {
         Effect  = "Allow"
         Action  = ["ec2:CreateTags"]
         Resource = "arn:aws:ec2:*:*:security-group/*"
