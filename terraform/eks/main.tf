@@ -147,11 +147,16 @@ resource "null_resource" "cleanup_k8s" {
       # Wait for ALBs and their ENIs to be released
       sleep 30
 
-      # Revoke all cross-SG rules from k8s-* security groups before deleting
-      # (cross-references between SGs prevent deletion)
-      for SG_ID in $(aws ec2 describe-security-groups --region $REGION \
+      K8S_SGS=$(aws ec2 describe-security-groups --region $REGION \
         --filters "Name=vpc-id,Values=$VPC_ID" \
-        --query "SecurityGroups[?starts_with(GroupName,'k8s-')].GroupId" --output text); do
+        --query "SecurityGroups[?starts_with(GroupName,'k8s-')].GroupId" --output text)
+
+      ALL_SGS=$(aws ec2 describe-security-groups --region $REGION \
+        --filters "Name=vpc-id,Values=$VPC_ID" \
+        --query "SecurityGroups[*].GroupId" --output text)
+
+      # For each k8s-* SG: revoke its own rules, then revoke references to it from all other SGs
+      for SG_ID in $K8S_SGS; do
         echo "Revoking rules from SG: $SG_ID"
         INGRESS=$(aws ec2 describe-security-group-rules --region $REGION \
           --filters "Name=group-id,Values=$SG_ID" \
@@ -163,12 +168,24 @@ resource "null_resource" "cleanup_k8s" {
           --query "SecurityGroupRules[?IsEgress].SecurityGroupRuleId" --output text)
         [ -n "$EGRESS" ] && aws ec2 revoke-security-group-egress --group-id $SG_ID \
           --region $REGION --security-group-rule-ids $EGRESS || true
+
+        for OTHER_SG in $ALL_SGS; do
+          [ "$OTHER_SG" = "$SG_ID" ] && continue
+          REFS=$(aws ec2 describe-security-group-rules --region $REGION \
+            --filters "Name=group-id,Values=$OTHER_SG" \
+            --query "SecurityGroupRules[?ReferencedGroupInfo.GroupId=='$SG_ID'].SecurityGroupRuleId" --output text)
+          if [ -n "$REFS" ]; then
+            echo "Revoking reference to $SG_ID in $OTHER_SG"
+            aws ec2 revoke-security-group-ingress --group-id $OTHER_SG \
+              --region $REGION --security-group-rule-ids $REFS 2>/dev/null || \
+            aws ec2 revoke-security-group-egress  --group-id $OTHER_SG \
+              --region $REGION --security-group-rule-ids $REFS 2>/dev/null || true
+          fi
+        done
       done
 
       # Delete ALB-created security groups (not managed by terraform)
-      for SG_ID in $(aws ec2 describe-security-groups --region $REGION \
-        --filters "Name=vpc-id,Values=$VPC_ID" \
-        --query "SecurityGroups[?starts_with(GroupName,'k8s-')].GroupId" --output text); do
+      for SG_ID in $K8S_SGS; do
         echo "Deleting SG: $SG_ID"
         aws ec2 delete-security-group --group-id $SG_ID --region $REGION || true
       done
