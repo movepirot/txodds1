@@ -11,6 +11,9 @@
 *.tfvars
 *.tfvars.json
 
+# macOS metadata
+.DS_Store
+
 # Crash logs
 crash.log
 crash.*.log
