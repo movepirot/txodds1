@@ -94,3 +94,23 @@ resource "aws_iam_role_policy_attachment" "ecr-read-policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.eks-workers.name
 }
+
+resource "null_resource" "cleanup_k8s" {
+  triggers = {
+    cluster_name = aws_eks_cluster.txodds.name
+    region       = "eu-west-2"
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      aws eks update-kubeconfig --name ${self.triggers.cluster_name} --region ${self.triggers.region} || true
+      helm uninstall txodds -n txodds --ignore-not-found 2>/dev/null || true
+      helm uninstall aws-load-balancer-controller -n kube-system --ignore-not-found 2>/dev/null || true
+      kubectl delete ingress --all -n txodds 2>/dev/null || true
+      sleep 30
+    EOT
+  }
+
+  depends_on = [aws_eks_cluster.txodds]
+}
