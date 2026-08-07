@@ -64,6 +64,17 @@ jobs:
       - name: Create namespace
         run: kubectl get namespace txodds || kubectl create namespace txodds
 
+      - name: Diff with Helm
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          helm plugin install https://github.com/databus23/helm-diff 2>/dev/null || true
+          helm diff upgrade --install txodds app/app \
+            -n txodds \
+            --set image.repository=$REGISTRY/$ECR_REPOSITORY \
+            --set image.tag=$IMAGE_TAG
+
       - name: Deploy with Helm
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
