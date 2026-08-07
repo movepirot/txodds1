@@ -8,8 +8,8 @@ def getUsers():
   if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
     client_ip = request.environ['REMOTE_ADDR']
   else:
-    client_ip = "Client IP: " + request.environ['HTTP_X_FORWARDED_FOR']
-  return client_ip
+    client_ip = request.environ['HTTP_X_FORWARDED_FOR']
+  return "Client IP: " + client_ip
 
 @app.route('/health')
 def healthCheck():
